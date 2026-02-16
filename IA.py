@@ -1,4 +1,5 @@
 import numpy as np
+from pandas import read_csv
 
 class IA:
     def __init__(self, dim_couche, tauxapp):
@@ -12,24 +13,18 @@ class IA:
         self.initialisation_parametres()
 
     def fonction_activation(self, x):
-        # Modification : Utilisation de ReLU au lieu de la Sigmoïde
-        return np.maximum(0, x)
-
+        return 1/(1 + np.exp(-x))
     def softmax(self, x):
-        # Soustraction du max pour la stabilité numérique
-        e_x = np.exp(x - np.max(x))
+        e_x = np.exp(x)
         return e_x / e_x.sum(axis=0)
 
     def d_activation(self, a):
-        # Modification : Dérivée de ReLU (1 si l'activation était > 0, sinon 0)
-        return (a > 0).astype(float)
+        return a*(1-a)
 
     def initialisation_parametres(self):
         for l in range(1, len(self.nbneuroneparcouche)):
-            # Modification : Initialisation de He (recommandée pour ReLU)
             std = np.sqrt(2.0 / self.nbneuroneparcouche[l - 1])
             self.poids[f'W{l}'] = np.random.randn(self.nbneuroneparcouche[l], self.nbneuroneparcouche[l - 1]) * std
-            # Initialiser les biais à 0 ou à une petite valeur positive (0.01)
             self.biais[f'b{l}'] = np.zeros((self.nbneuroneparcouche[l], 1))
 
     def Forwardprop(self, Image):
@@ -54,8 +49,6 @@ class IA:
     def Backwardprop(self, attendu):
         y = np.zeros((self.nbneuroneparcouche[-1], 1))
         y[attendu] = 1
-
-        # Gradient de la couche de sortie (Softmax + Cross-Entropy)
         dZ = self.cache[f"A{self.nbcouche}"] - y
 
         for l in range(self.nbcouche, 0, -1):
@@ -77,23 +70,24 @@ class IA:
     def training(self, df):
         data = df.values
         nb_images = len(data)
-        print(f"Début de l'entraînement sur {nb_images} images...")
-
+        tauxreussite = 0
         for i in range(nb_images):
             y_true = int(data[i, 0])
             image = data[i, 1:].reshape(-1, 1) / 255.0
-            self.Forwardprop(image)
+            prediction = self.Forwardprop(image)
+            if prediction == y_true:
+                tauxreussite += 1
             self.Backwardprop(y_true)
-            if i % 5000 == 0:
-                print(f"Images traitées : {i}/{nb_images} ({(i / nb_images) * 100:.2f}%)")
+            if i % 5000 == 0 and i > 0:
+                score = (tauxreussite / (i + 1)) * 100
+                print(f"Image {i}/{nb_images} - Taux de réussite actuel : {score:.2f}%")
 
     def predict(self, liste_images):
-        # Mappe les index EMNIST vers des caractères lisibles
         mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         resultat = ""
         for img in liste_images:
-            # S'assurer que l'image est aplatie et normalisée
             image_flat = img.flatten().reshape(-1, 1).astype(float)
+            # Normalisation automatique si nécessaire
             if np.max(image_flat) > 1.0:
                 image_flat /= 255.0
 

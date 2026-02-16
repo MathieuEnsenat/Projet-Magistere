@@ -42,15 +42,10 @@ def generar_imagen_rgb():
 
 
 def rgb_a_gris(image):
-    "Renvoie une copie de l'image en niveaux de gris."
     return np.average(image, axis=2, weights=[0.299, 0.587, 0.114])
 
 
 def binarisation(image, k, C):
-    """Renvoie une copie de l'image en noir et blanc.
-    Les pixels au premier plan sont noirs et ceux en arrière-plan sont blancs.
-    Utilise une méthode de seuillage adaptatif gaussien: pour chaque pixel, le seuil est
-    une moyenne des pixels alentours pondérée par une fenetre gaussienne."""
     resultat = np.zeros_like(image)
     longueur, largeur = image.shape
     image_pad = np.zeros((longueur + k - 1, largeur + k - 1))
