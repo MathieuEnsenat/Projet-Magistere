@@ -14,61 +14,89 @@ class IA:
 
     def initialisation_parametres(self):
         for l in range(1, len(self.nbneuroneparcouche)):
+            # Initialisation de He (optimale pour ReLU)
             self.poids[f'W{l}'] = np.random.randn(self.nbneuroneparcouche[l], self.nbneuroneparcouche[l - 1]) * np.sqrt(
                 2. / self.nbneuroneparcouche[l - 1])
             self.biais[f'b{l}'] = np.zeros((self.nbneuroneparcouche[l], 1))
 
     def load_csv(self, filename="poids.csv"):
         try:
-            data = np.loadtxt(filename, delimiter=",")
+            # On charge les données en ignorant les lignes de commentaires si elles existent
+            data = np.loadtxt(filename, delimiter=",", comments='#')
             cursor = 0
             for l in range(1, self.nbcouche + 1):
-                shape_w = self.poids[f'W{l}'].shape
+                # Reconstruction de W
+                shape_w = (self.nbneuroneparcouche[l], self.nbneuroneparcouche[l - 1])
                 size_w = shape_w[0] * shape_w[1]
                 self.poids[f'W{l}'] = data[cursor: cursor + size_w].reshape(shape_w)
                 cursor += size_w
-                shape_b = self.biais[f'b{l}'].shape
-                size_b = shape_b[0] * shape_b[1]
+
+                # Reconstruction de b
+                shape_b = (self.nbneuroneparcouche[l], 1)
+                size_b = shape_b[0]
                 self.biais[f'b{l}'] = data[cursor: cursor + size_b].reshape(shape_b)
                 cursor += size_b
             print(f"Modèle chargé avec succès depuis {filename}")
-        except FileNotFoundError:
-            print(f"Erreur : Le fichier {filename} n'existe pas.")
         except Exception as e:
             print(f"Erreur lors du chargement : {e}")
 
-    def fonction_activation(self, x):
+    def save_csv(self, filename="poids.csv"):
+        # On aplatit tout dans une liste unique pour un export propre
+        params_to_save = []
+        for l in range(1, self.nbcouche + 1):
+            params_to_save.append(self.poids[f'W{l}'].flatten())
+            params_to_save.append(self.biais[f'b{l}'].flatten())
+
+        flat_list = np.concatenate(params_to_save)
+        np.savetxt(filename, flat_list, delimiter=",", header="Poids et Biais concaténés")
+        print("Sauvegarde terminée.")
+
+    def activation_relu(self, x):
         return np.maximum(0, x)
 
-    def d_activation(self, z):
-        return np.where(z > 0, 1, 0)
+    def d_relu(self, z):
+        return (z > 0).astype(float)
 
     def softmax(self, z):
-        exp_z = np.exp(z - np.max(z))
-        return exp_z / exp_z.sum(axis=0)
+        # Soustraction du max pour la stabilité numérique (évite exp(large_nombre))
+        exp_z = np.exp(z - np.max(z, axis=0, keepdims=True))
+        return exp_z / np.sum(exp_z, axis=0, keepdims=True)
 
     def Forwardprop(self, Image):
+        # S'assurer que l'image est un vecteur colonne
         self.cache["A0"] = Image.reshape(-1, 1)
+
         for l in range(1, self.nbcouche + 1):
             Z = np.dot(self.poids[f'W{l}'], self.cache[f"A{l - 1}"]) + self.biais[f'b{l}']
             self.cache[f"Z{l}"] = Z
             if l == self.nbcouche:
                 self.cache[f"A{l}"] = self.softmax(Z)
             else:
-                self.cache[f"A{l}"] = self.fonction_activation(Z)
+                self.cache[f"A{l}"] = self.activation_relu(Z)
+
         return np.argmax(self.cache[f"A{self.nbcouche}"])
 
     def Backwardprop(self, y_true_index):
+        # Encodage One-hot
         y = np.zeros((self.nbneuroneparcouche[-1], 1))
         y[y_true_index] = 1
+
+        # Erreur de sortie (Softmax + Cross-Entropy)
         dZ = self.cache[f"A{self.nbcouche}"] - y
+
         for l in range(self.nbcouche, 0, -1):
             dW = np.dot(dZ, self.cache[f"A{l - 1}"].T)
             db = dZ
+
+            # Calcul du dZ pour la couche précédente AVANT de mettre à jour les poids actuels
             if l > 1:
-                dZ = np.dot(self.poids[f'W{l}'].T, dZ) * self.d_activation(self.cache[f"Z{l - 1}"])
+                dZ = np.dot(self.poids[f'W{l}'].T, dZ) * self.d_relu(self.cache[f"Z{l - 1}"])
+
+            # Mise à jour
             self.poids[f'W{l}'] -= self.tauxapp * dW
             self.biais[f'b{l}'] -= self.tauxapp * db
+
+    # ... (Le reste de tes fonctions training et test sont correctes)
 
     def save_csv(self, filename="poids.csv"):
         with open(filename, "w") as file:
@@ -117,3 +145,4 @@ class IA:
             prediction_index = self.Forwardprop(image_flat)
             resultat += mapping[prediction_index]
         return resultat
+

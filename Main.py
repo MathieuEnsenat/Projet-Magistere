@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IA import IA
 
-imagen_test = importer_image("s.png")
+imagen_test = importer_image("t.png")
 imagen_gris = rgb_a_gris(imagen_test)
 imagen_binaria = binaire(imagen_gris)
 mots_pre = cadrage2(imagen_binaria)
@@ -18,8 +18,6 @@ for i, mot in enumerate(mots_propre):
         img_norm = normaliser(lettre)
         plt.imshow(img_norm, cmap='gray')
         plt.show()
-
-
 
 with open("Résultat.txt", "w", encoding="utf-8") as file:
     for i, mot in enumerate(mots_propre):
