@@ -1,17 +1,16 @@
-from traitement_image import rgb_a_gris, binarisation, generar_imagen_rgb, importer_image, binaire
-from decoupage import pre_normalisation, cadrage2, scanner_horizontal, scanner_vertical, cadrage, normaliser, \
-    redimensionner, post_decoupage
+from traitement_image import rgb_a_gris, binaire, importer_image
+from decoupage import pre_normalisation, cadrage2, normaliser
 import numpy as np
 import matplotlib.pyplot as plt
-from time import time
 from IA import IA
-import pandas as pd
 
-imagen_test = importer_image("t.png")
+imagen_test = importer_image("s.png")
 imagen_gris = rgb_a_gris(imagen_test)
 imagen_binaria = binaire(imagen_gris)
 mots_pre = cadrage2(imagen_binaria)
 mots_propre = pre_normalisation(mots_pre)
+reseau = IA([784, 128, 62], 0.01)
+reseau.load_csv("poids.csv")
 
 for i, mot in enumerate(mots_propre):
     print(f"Palabra {i}:")
@@ -21,20 +20,20 @@ for i, mot in enumerate(mots_propre):
         plt.show()
 
 
-IA=IA([784, 128, 62],0.01)
-df_train = pd.read_csv('Magistère/emnist-byclass-train.csv', header=None)
-IA.training(df_train)
 
-with open("resultat_ocr.txt", "w") as file:
-    for mot in mots_propre:
+with open("Résultat.txt", "w", encoding="utf-8") as file:
+    for i, mot in enumerate(mots_propre):
         lettres_normalisees = []
         for lettre_img in mot:
             img_norm = normaliser(lettre_img)
             lettres_normalisees.append(img_norm)
-        file.write(IA.predict(lettres_normalisees))
+        if lettres_normalisees:
+            mot_predit = reseau.predict(lettres_normalisees)
+            print(f"Mot {i} reconnu : {mot_predit}")
+            file.write(mot_predit + " ")
         file.write("\n")
 
-
+print("Reconnaissance terminée. Consultez 'Résultat.txt'.")
 
 
 

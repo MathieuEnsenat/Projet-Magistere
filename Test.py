@@ -54,5 +54,5 @@ def main(chemin_image, chemin_sortie):
 
 if __name__ == "__main__":
     # Remplace par le chemin de ton image et le nom du fichier voulu
-    main("p.png", "resultat_ocr.txt")
+    main("p.png", "Résultat.txt")
 
