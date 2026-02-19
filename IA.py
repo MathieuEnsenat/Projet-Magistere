@@ -40,17 +40,6 @@ class IA:
         except Exception as e:
             print(f"Erreur lors du chargement : {e}")
 
-    def save_csv(self, filename="poids.csv"):
-        # On aplatit tout dans une liste unique pour un export propre
-        params_to_save = []
-        for l in range(1, self.nbcouche + 1):
-            params_to_save.append(self.poids[f'W{l}'].flatten())
-            params_to_save.append(self.biais[f'b{l}'].flatten())
-
-        flat_list = np.concatenate(params_to_save)
-        np.savetxt(filename, flat_list, delimiter=",", header="Poids et Biais concaténés")
-        print("Sauvegarde terminée.")
-
     def activation_relu(self, x):
         return np.maximum(0, x)
 
@@ -63,7 +52,6 @@ class IA:
         return exp_z / np.sum(exp_z, axis=0, keepdims=True)
 
     def Forwardprop(self, Image):
-        # S'assurer que l'image est un vecteur colonne
         self.cache["A0"] = Image.reshape(-1, 1)
 
         for l in range(1, self.nbcouche + 1):
@@ -80,23 +68,14 @@ class IA:
         # Encodage One-hot
         y = np.zeros((self.nbneuroneparcouche[-1], 1))
         y[y_true_index] = 1
-
-        # Erreur de sortie (Softmax + Cross-Entropy)
         dZ = self.cache[f"A{self.nbcouche}"] - y
-
         for l in range(self.nbcouche, 0, -1):
             dW = np.dot(dZ, self.cache[f"A{l - 1}"].T)
             db = dZ
-
-            # Calcul du dZ pour la couche précédente AVANT de mettre à jour les poids actuels
             if l > 1:
                 dZ = np.dot(self.poids[f'W{l}'].T, dZ) * self.d_relu(self.cache[f"Z{l - 1}"])
-
-            # Mise à jour
             self.poids[f'W{l}'] -= self.tauxapp * dW
             self.biais[f'b{l}'] -= self.tauxapp * db
-
-    # ... (Le reste de tes fonctions training et test sont correctes)
 
     def save_csv(self, filename="poids.csv"):
         with open(filename, "w") as file:
@@ -109,6 +88,7 @@ class IA:
 
     def training(self, df):
         data = df.values
+        np.random.shuffle(data)
         tauxreussite = 0
         nb_images = len(data)
         for i in range(nb_images):
@@ -124,6 +104,7 @@ class IA:
 
     def test(self,df):
         data = df.values
+        np.random.shuffle(data)
         tauxreussite = 0
         for i in range(len(data)):
             y_true = int(data[i, 0])
@@ -146,3 +127,10 @@ class IA:
             resultat += mapping[prediction_index]
         return resultat
 
+'''
+IA=IA([784,128,62],0.01)
+df_train = pd.read_csv("dataset_arial.csv")
+df_test = pd.read_csv("Magistère/emnist-byclass-test.csv")
+IA.training(df_train)
+IA.test(df_test)
+'''

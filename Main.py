@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IA import IA
 
-imagen_test = importer_image("t.png")
+imagen_test = importer_image("lorem.png")
 imagen_gris = rgb_a_gris(imagen_test)
 imagen_binaria = binaire(imagen_gris)
 mots_pre = cadrage2(imagen_binaria)
@@ -29,7 +29,6 @@ with open("Résultat.txt", "w", encoding="utf-8") as file:
             mot_predit = reseau.predict(lettres_normalisees)
             print(f"Mot {i} reconnu : {mot_predit}")
             file.write(mot_predit + " ")
-        file.write("\n")
 
 print("Reconnaissance terminée. Consultez 'Résultat.txt'.")
 
