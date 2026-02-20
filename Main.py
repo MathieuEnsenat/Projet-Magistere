@@ -1,6 +1,5 @@
 from traitement_image import rgb_a_gris, binaire, importer_image
 from decoupage import pre_normalisation, cadrage2, normaliser
-import numpy as np
 import matplotlib.pyplot as plt
 from IA import IA
 
