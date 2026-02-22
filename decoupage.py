@@ -154,7 +154,7 @@ def normaliser(image):
     x_debut = (28 - new_l) // 2
     res[y_debut:y_debut+new_h, x_debut:x_debut+new_l] = img_redim
     
-    return res
+    return flouter(res)
 
 
 def post_decoupage(imagen_letra):
@@ -211,4 +211,19 @@ def pre_normalisation(liste_mots_salle):
             nouvelle_mot.extend(correction)
         liste_mots_propre.append(nouvelle_mot)
     return liste_mots_propre
+
+def flouter(img):
+    #noyau gaussien
+    kernel = np.array([[1, 2, 1],
+                       [2, 4, 2],
+                       [1, 2, 1]]) / 16
+    
+    #convolution
+    h, l = img.shape
+    img_floutee = np.copy(img)
+    for y in range(1, h-1):
+        for x in range(1, l-1):
+            region = img[y-1:y+2, x-1:x+2]
+            img_floutee[y, x] = np.sum(region * kernel)
+    return img_floutee
 

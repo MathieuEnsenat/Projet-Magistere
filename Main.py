@@ -1,11 +1,10 @@
 from traitement_image import rgb_a_gris, binarisationOtsu, importer_image
 from decoupage import pre_normalisation, cadrage2, normaliser
-import numpy as np
 import matplotlib.pyplot as plt
 from IA import IA
 
 mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt"
-imagen_test = importer_image("test2.png")
+imagen_test = importer_image("data/test2.png")
 imagen_gris = rgb_a_gris(imagen_test)
 imagen_binaria = binarisationOtsu(imagen_gris)
 plt.imshow(imagen_binaria, cmap='gray')
