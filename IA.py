@@ -107,7 +107,6 @@ class IA:
 
 
     def predict(self, liste_images, mapping):
-        #mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         resultat = ""
         for img in liste_images:
             image_flat = img.flatten().astype(float)
@@ -146,8 +145,8 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     #importation des données d'entraînement
-    #x_train, y_train = load_emnist_csv("data/emnist-balanced-train.csv")
-    #x_test, y_test = load_emnist_csv("data/emnist-balanced-test.csv")
+    #x_train, y_train = load_emnist_csv("Magistère/emnist-byclass-train.csv")
+    #x_test, y_test = load_emnist_csv("Magistère/emnist-byclass-test.csv")
 
     #création du réseau 
     dim_couches = [784, 128, 47]
@@ -165,7 +164,7 @@ if __name__ == "__main__":
     img = rgb_a_gris(img)
     img = 255 - img
 
-    mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt"
+    mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
     prediction = reseau.predict([img], mapping)
     plt.imshow(img, cmap="gray")

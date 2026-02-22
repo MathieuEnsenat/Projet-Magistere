@@ -40,7 +40,7 @@ def main(chemin_image, chemin_sortie):
             lettres_normalisees.append(img_norm)
 
         # Utilisation de la méthode predict de la classe IA
-        mot_predit = mon_ia.predict(lettres_normalisees)
+        mot_predit = mon_ia.predict(lettres_normalisees,mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
         texte_final.append(mot_predit)
 
     # 5. Sauvegarde dans un fichier texte
@@ -54,5 +54,5 @@ def main(chemin_image, chemin_sortie):
 
 if __name__ == "__main__":
     # Remplace par le chemin de ton image et le nom du fichier voulu
-    main("test4.jpeg", "Résultat.txt")
+    main("lorem.png", "Résultat.txt")
 
