@@ -15,14 +15,14 @@ class IA:
     def initialisation_parametres(self):
         for l in range(1, len(self.nbneuroneparcouche)):
             # Initialisation de He (optimale pour ReLU)
-            self.poids[f'W{l}'] = np.random.randn(self.nbneuroneparcouche[l], self.nbneuroneparcouche[l - 1]) * np.sqrt(
+            self.poids[f"W{l}"] = np.random.randn(self.nbneuroneparcouche[l], self.nbneuroneparcouche[l - 1]) * np.sqrt(
                 2. / self.nbneuroneparcouche[l - 1])
-            self.biais[f'b{l}'] = np.zeros((self.nbneuroneparcouche[l], 1))
+            self.biais[f"b{l}"] = np.zeros((self.nbneuroneparcouche[l], 1))
 
-    def load_csv(self, filename="poids.csv"):
+    def load_csv(self, filename="data/poids.csv"):
         try:
             # On charge les données en ignorant les lignes de commentaires si elles existent
-            data = np.loadtxt(filename, delimiter=",", comments='#')
+            data = np.loadtxt(filename, delimiter=",", comments="#")
             cursor = 0
             for l in range(1, self.nbcouche + 1):
                 # Reconstruction de W
@@ -51,10 +51,10 @@ class IA:
         exp_z = np.exp(z - np.max(z, axis=0, keepdims=True))
         return exp_z / np.sum(exp_z, axis=0, keepdims=True)
 
-    def Forwardprop(self, Image):
-        self.cache["A0"] = Image.reshape(-1, 1)
+    def Forwardprop(self, x):
+        self.cache["A0"] = x.reshape(-1, 1)
 
-        for l in range(1, self.nbcouche + 1):
+        for l in range(1, self.nbcouche+1):
             Z = np.dot(self.poids[f'W{l}'], self.cache[f"A{l - 1}"]) + self.biais[f'b{l}']
             self.cache[f"Z{l}"] = Z
             if l == self.nbcouche:
@@ -64,7 +64,7 @@ class IA:
 
         return np.argmax(self.cache[f"A{self.nbcouche}"])
 
-    def Backwardprop(self, y_true_index):
+    def Backwardprop(self, y_true_index, beta=0.9):
         # Encodage One-hot
         y = np.zeros((self.nbneuroneparcouche[-1], 1))
         y[y_true_index] = 1
@@ -73,64 +73,101 @@ class IA:
             dW = np.dot(dZ, self.cache[f"A{l - 1}"].T)
             db = dZ
             if l > 1:
-                dZ = np.dot(self.poids[f'W{l}'].T, dZ) * self.d_relu(self.cache[f"Z{l - 1}"])
-            self.poids[f'W{l}'] -= self.tauxapp * dW
-            self.biais[f'b{l}'] -= self.tauxapp * db
+                dZ = np.dot(self.poids[f"W{l}"].T, dZ) * self.d_relu(self.cache[f"Z{l - 1}"])
+            self.poids[f"W{l}"] -= self.tauxapp * dW
+            self.biais[f"b{l}"] -= self.tauxapp * db
 
     def save_csv(self, filename="poids.csv"):
         with open(filename, "w") as file:
             for l in range(1, self.nbcouche + 1):
-                file.write(f"# Couche W{l} shape={self.poids[f'W{l}'].shape}\n")
+                file.write(f"# Couche W{l} shape={self.poids[f"W{l}"].shape}\n")
                 np.savetxt(file, self.poids[f'W{l}'].flatten(), delimiter=",")
-                file.write(f"# Biais b{l} shape={self.biais[f'b{l}'].shape}\n")
+                file.write(f"# Biais b{l} shape={self.biais[f"b{l}"].shape}\n")
                 np.savetxt(file, self.biais[f'b{l}'].flatten(), delimiter=",")
         print("Sauvegarde terminée.")
 
-    def training(self, df):
-        data = df.values
-        np.random.shuffle(data)
-        tauxreussite = 0
-        nb_images = len(data)
-        for i in range(nb_images):
-            y_true = int(data[i, 0])
-            image = (data[i, 1:].reshape(-1, 1) / 255.0)
-            prediction = self.Forwardprop(image)
-            if prediction == y_true:
-                tauxreussite += 1
-            self.Backwardprop(y_true)
-            if i % 10000 == 0 and i > 0:
-                print(f"Image {i}/{nb_images} - Précision actuelle: {(tauxreussite / i) * 100:.2f}%")
+    def training(self, x_train, y_train, x_test, y_test, nb_iterations):
+        for i in range(nb_iterations):
+            for x, y in zip(x_train, y_train):
+                self.Forwardprop(x)
+                self.Backwardprop(y)
+        
+            tx_reussite = self.test(x_test, y_test)
+            print(f"Itération {i+1}/{nb_iterations} - Précision actuelle: {tx_reussite:.2f}%")
+        
         self.save_csv("poids.csv")
 
-    def test(self,df):
-        data = df.values
-        np.random.shuffle(data)
-        tauxreussite = 0
-        for i in range(len(data)):
-            y_true = int(data[i, 0])
-            image = (data[i, 1:].reshape(-1, 1) / 255.0)
-            prediction = self.Forwardprop(image)
-            if prediction == y_true:
-                tauxreussite += 1
-            if i % 10000 == 0 and i > 0:
-                print(f"Image {i} - Précision: {(tauxreussite / i) * 100:.2f}%")
+    def test(self, x_test, y_test):
+        score = 0
+        for (x, y) in zip(x_test, y_test):
+            prediction = self.Forwardprop(x)
+            if prediction == y:
+                score += 1
+        return score * 100 / len(x_test) #taux de réussite
 
 
-    def predict(self, liste_images):
-        mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    def predict(self, liste_images, mapping):
+        #mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
         resultat = ""
         for img in liste_images:
-            image_flat = img.flatten().reshape(-1, 1).astype(float)
+            image_flat = img.flatten().astype(float)
             if np.max(image_flat) > 1.0:
                 image_flat /= 255.0
             prediction_index = self.Forwardprop(image_flat)
             resultat += mapping[prediction_index]
         return resultat
+    
 
-'''
-IA=IA([784,128,62],0.01)
-df_train = pd.read_csv("dataset_arial.csv")
-df_test = pd.read_csv("Magistère/emnist-byclass-test.csv")
-IA.training(df_train)
-IA.test(df_test)
-'''
+    
+
+def load_emnist_csv(file_path):
+    print(f"Chargement des données de '{file_path}'")
+    df = pd.read_csv(file_path, header=None)
+    df = np.array(df)    
+    np.random.shuffle(df) #mélange des données
+    
+    y = df[:, 0] #labels
+    x = df[:, 1:] #pixels des images
+    
+    #es images EMNIST sont pivotées à 90° et inversées dans le CSV
+    #on les remet à l'endroit
+    x = x.reshape(-1, 28, 28)
+    x = np.transpose(x, (0, 2, 1)) #corrige la rotation
+    x = x.reshape(-1, 784) #on ré-aplatit
+    
+    x = x / 255.0 #normalisation
+    
+    return x, y
+
+
+
+if __name__ == "__main__":
+    from traitement_image import importer_image, rgb_a_gris
+    import matplotlib.pyplot as plt
+
+    #importation des données d'entraînement
+    #x_train, y_train = load_emnist_csv("data/emnist-balanced-train.csv")
+    #x_test, y_test = load_emnist_csv("data/emnist-balanced-test.csv")
+
+    #création du réseau 
+    dim_couches = [784, 128, 47]
+    eta = 0.01
+    reseau = IA(dim_couches, eta)
+ 
+    #phase d'entrainement
+    #nb_iterations = 10
+    #reseau.training(x_train, y_train, x_test, y_test, nb_iterations)
+    
+    reseau.load_csv("data/poids.csv")
+
+    #test sur une image
+    img = importer_image("data/test_FACILE.png")
+    img = rgb_a_gris(img)
+    img = 255 - img
+
+    mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt"
+
+    prediction = reseau.predict([img], mapping)
+    plt.imshow(img, cmap="gray")
+    plt.title(f"Caractère sur l'image selon l'IA : {prediction}")
+    plt.show()

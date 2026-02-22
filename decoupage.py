@@ -100,37 +100,61 @@ def cadrage2(image):
     return mots
 
 def redimensionner(image, final_hauteur, final_largueur):
-    resultat = np.zeros((final_hauteur, final_largueur))
-    orig_hauteur, orig_largueur = image.shape
-    proportion_hauteur = orig_hauteur / final_hauteur
-    proportion_largueur = orig_largueur / final_largueur
+    """
+    Réduit la taille d'une image d'un facteur donné en lissant les pixels.
+    Ex: Image 28x28 avec factor=2 -> Image 14x14
+    """
+    h, w = image.shape
+    new_h, new_w = 26, 26
+    factor = h // new_h
+    trimmed_img = image[:new_h * factor, :new_w * factor]
+    
+    # 1. On "découpe" virtuellement l'image en blocs de (factor x factor)
+    # On crée une structure à 4 dimensions : (nouvelle_h, factor, nouvelle_w, factor)
+    view = trimmed_img.reshape(new_h, factor, new_w, factor)
+    
+    # 2. On calcule la moyenne sur les axes des blocs (axes 1 et 3)
+    resized = view.mean(axis=(1, 3))
+    
+    return resized
 
-    for i in range(final_hauteur):
-        for j in range(final_largueur):
-            orig_x = int(i*proportion_hauteur)
-            orig_y = int(j*proportion_largueur)
-
-            orig_x = min(orig_x, orig_hauteur - 1) #Securité car sinon crash de index error
-            orig_y = min(orig_y, orig_largueur - 1)
-
-            resultat[i,j] = image[orig_x, orig_y]
-    return resultat
 
 def normaliser(image):
-    taille_finale = 28
-    taille_interieur = 20
-    h, l = image.shape
-    max_dim = max(h, l)
-    cuadrado = np.zeros((max_dim, max_dim))
-    centre_h = (max_dim -h)//2
-    centre_l = (max_dim - l)//2
-    cuadrado[centre_h:centre_h+h, centre_l:centre_l+l] = image
-    img_20x20 = redimensionner(cuadrado, taille_interieur, taille_interieur)
-
-    resultat = np.zeros((taille_finale, taille_finale))
-    marge = (taille_finale-taille_interieur)//2
-    resultat[marge:marge+taille_interieur, marge:marge+taille_interieur] = img_20x20
-    return resultat
+    #suppression des lignes et colonnes vides
+    lignes = np.any(image, axis=1)
+    cols = np.any(image, axis=0)
+    
+    ymin, ymax = np.where(lignes)[0][[0, -1]]
+    xmin, xmax = np.where(cols)[0][[0, -1]]
+    img_reduite = image[ymin:ymax+1, xmin:xmax+1]
+    
+    #on redimensionne le caractère pour qu'il rentre dans un carré de 20x20:
+    #on garde le ratio d'aspect
+    h, l = img_reduite.shape
+    if h > l:
+        new_h = 20
+        new_l = int(l * (20 / h))
+    else:
+        new_l = 20
+        new_h = int(h * (20 / l))
+        
+    #redimensionnement
+    if new_l == 0: 
+        new_l = 1
+    if new_h == 0: 
+        new_h = 1
+    indices_y = np.linspace(0, h - 1, new_h).astype(int)
+    indices_x = np.linspace(0, l - 1, new_l).astype(int)
+    img_redim = img_reduite[indices_y, :]
+    img_redim = img_redim[:, indices_x]
+    
+    #on crée un cadre noir 28x28 et on met le caractère au centre
+    res = np.zeros((28, 28))
+    y_debut = (28 - new_h) // 2 
+    x_debut = (28 - new_l) // 2
+    res[y_debut:y_debut+new_h, x_debut:x_debut+new_l] = img_redim
+    
+    return res
 
 
 def post_decoupage(imagen_letra):
