@@ -3,8 +3,8 @@ from decoupage import pre_normalisation, cadrage2, normaliser
 import matplotlib.pyplot as plt
 from IA import IA
 
-mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt"
-imagen_test = importer_image("test2.png")
+mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+imagen_test = importer_image("test1.png")
 imagen_gris = rgb_a_gris(imagen_test)
 imagen_binaria = binarisationOtsu(imagen_gris)
 plt.imshow(imagen_binaria, cmap='gray')
@@ -15,12 +15,10 @@ reseau = IA([784, 128, 47], 0.01)
 reseau.load_csv("data/poids.csv")
 
 for i, mot in enumerate(mots_propre):
-    print(f"Palabra {i}:")
     for lettre in mot:
         img_norm = normaliser(lettre)
         plt.imshow(img_norm, cmap='gray')
         plt.show()
-        print(reseau.predict([img_norm], mapping))
 
 with open("Résultat.txt", "w", encoding="utf-8") as file:
     for i, mot in enumerate(mots_propre):
