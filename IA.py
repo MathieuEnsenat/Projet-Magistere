@@ -164,7 +164,7 @@ if __name__ == "__main__":
     img = rgb_a_gris(img)
     img = 255 - img
 
-    mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt"
 
     prediction = reseau.predict([img], mapping)
     plt.imshow(img, cmap="gray")

@@ -156,7 +156,6 @@ def normaliser(image):
     
     return flouter(res)
 
-
 def post_decoupage(imagen_letra):
     h, l = imagen_letra.shape
     if h == 0 or l == 0:

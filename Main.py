@@ -3,8 +3,8 @@ from decoupage import pre_normalisation, cadrage2, normaliser
 import matplotlib.pyplot as plt
 from IA import IA
 
-mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-imagen_test = importer_image("test1.png")
+mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghnqrt"
+imagen_test = importer_image("data/test2.png")
 imagen_gris = rgb_a_gris(imagen_test)
 imagen_binaria = binarisationOtsu(imagen_gris)
 plt.imshow(imagen_binaria, cmap='gray')
@@ -28,7 +28,7 @@ with open("Résultat.txt", "w", encoding="utf-8") as file:
             lettres_normalisees.append(img_norm)
         if lettres_normalisees:
             mot_predit = reseau.predict(lettres_normalisees, mapping)
-            print(f"Mot {i} reconnu : {mot_predit}")
+            print(f"Mot {i} reconnu : {mot_predit.lower()}")
             file.write(mot_predit + " ")
 
 print("Reconnaissance terminée. Consultez 'Résultat.txt'.")
