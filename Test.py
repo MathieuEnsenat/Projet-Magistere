@@ -1,5 +1,5 @@
 import numpy as np
-from traitement_image import importer_image, rgb_a_gris, binaire
+from traitement_image import importer_image, rgb_a_gris, binarisationOtsu
 from decoupage import cadrage2, pre_normalisation, normaliser
 from IA import IA
 
@@ -9,7 +9,7 @@ def main(chemin_image, chemin_sortie):
     print("Chargement de l'image...")
     img_rgb = importer_image(chemin_image)
     img_gris = rgb_a_gris(img_rgb)
-    img_binaire = binaire(img_gris)  # Conversion en Noir et Blanc
+    img_binaire = binarisationOtsu(img_gris)  # Conversion en Noir et Blanc
 
     # 2. Segmentation (Découpage en mots puis en lettres)
     print("Segmentation de l'image en mots et lettres...")
@@ -54,5 +54,5 @@ def main(chemin_image, chemin_sortie):
 
 if __name__ == "__main__":
     # Remplace par le chemin de ton image et le nom du fichier voulu
-    main("p.png", "Résultat.txt")
+    main("test4.jpeg", "Résultat.txt")
 

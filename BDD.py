@@ -9,7 +9,7 @@ def generate_arial_dataset(filename="dataset_arial.csv", samples_per_char=100):
 
     mapping = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     try:
-        font_path = "/Library/Fonts/Arial.ttf"  # Assure-toi que le fichier est dans le dossier ou utilise un chemin absolu
+        font_path = "Windows/Fonts/arial.ttf"  # Assure-toi que le fichier est dans le dossier ou utilise un chemin absolu
         font_size = 22
         font = ImageFont.truetype(font_path, font_size)
     except:
@@ -48,4 +48,36 @@ def generate_arial_dataset(filename="dataset_arial.csv", samples_per_char=100):
 
 # Exécution
 if __name__ == "__main__":
-    generate_arial_dataset("dataset_arial.csv", samples_per_char=5000)
+    #generate_arial_dataset("dataset_arial.csv", samples_per_char=5000)
+
+    def load_arial_dataset(filename="dataset_arial.csv"):
+        # 1. Charger le CSV (sans en-tête car le script n'en génère pas)
+        print("Chargement des données...")
+        df = pd.read_csv(filename, header=None)
+        
+        # 2. Séparer le label (1ère colonne) des pixels (784 colonnes suivantes)
+        y = df.iloc[:, 0].values  # Labels (0 à 61)
+        X = df.iloc[:, 1:].values # Pixels (0 à 255)
+        
+        # 3. Normalisation (très important pour les réseaux de neurones)
+        # On passe d'une plage [0, 255] à [0, 1] pour aider la convergence
+        X = X.astype('float32') / 255.0
+        
+        # 4. Redimensionner pour un CNN (Convolutional Neural Network)
+        # On repasse de 784 à (28, 28, 1) car les CNN attendent des images 2D + canal couleur
+        X = X.reshape(-1, 28, 28)
+
+        
+        return X, y
+
+    # Utilisation
+    X_train, y_train = load_arial_dataset("dataset_arial.csv")
+    print(f"Forme des images : {X_train.shape}") # Devrait être (nb_images, 28, 28, 1)
+    print(f"Forme des labels : {y_train.shape}")
+
+    # Afficher la première image chargée
+    import matplotlib.pyplot as plt
+    for i in range(270000, 270005):
+        plt.imshow(X_train[i].reshape(28, 28), cmap='gray')
+        plt.title(f"Label: {y_train[i]}")
+        plt.show()
